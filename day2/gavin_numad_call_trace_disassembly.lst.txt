@@ -1,0 +1,373 @@
+# numad_call_trace_disassembly.lst
+# bt 2950 -FF
+PID: 2950   TASK: ffff885f97745280  CPU: 49  COMMAND: "numad"
+    [exception RIP: smp_call_function_single+219]
+    RIP: ffffffff81103a0b  RSP: ffff885f8fb4fb28  RFLAGS: 00000202
+    RAX: 0000000000000000  RBX: 0000000000000013  RCX: 0000000000000000
+    RDX: 0000000000000003  RSI: 0000000000000100  RDI: 0000000000000286
+    RBP: ffff885f8fb4fb70   R8: 0000000000000000   R9: 0000000000080000
+    R10: 0000000000000000  R11: ffff883faf917c88  R12: ffffffff810725f0
+    R13: 0000000000000013  R14: ffffffff810725f0  R15: ffff885f8fb4fbc8
+    CS: 0010  SS: 0018
+ #0 [ffff885f8fb4fb30] kvm_unmap_rmapp at ffffffffc01f1c3e [kvm]
+    ffff885f8fb4fb38: 0000000000000000 flush_tlb_func   
+    ffff885f8fb4fb48: ffff885f8fb4fbc8 0000000000000003 
+    ffff885f8fb4fb58: 000000007f655fea [ffff887f96c8d910:mm_struct] 
+    ffff885f8fb4fb68: 0000000000000031 ffff885f8fb4fbb8 
+    ffff885f8fb4fb78: smp_call_function_many+531 
+ #1 [ffff885f8fb4fb78] smp_call_function_many at ffffffff81103db3
+    ffff885f8fb4fb80: 0000000000000031 0100000300000001 
+    ffff885f8fb4fb90: [ffff887f96c8d640:mm_struct] [ffff887f96c8d910:mm_struct] 
+    ffff885f8fb4fba0: [ffff887f96c8d910:mm_struct] [ffff885f5f1583e8:vm_area_struct] 
+    ffff885f8fb4fbb0: 00007ff6c13e3200 ffff885f8fb4fc00 
+    ffff885f8fb4fbc0: native_flush_tlb_others+77 
+ #2 [ffff885f8fb4fbc0] native_flush_tlb_others at ffffffff8107279d
+    ffff885f8fb4fbc8: [ffff887f96c8d640:mm_struct] 00007ff6c13e3200 
+    ffff885f8fb4fbd8: 0000000000000000 000000007f655fea 
+    ffff885f8fb4fbe8: [ffff887f96c8d640:mm_struct] [ffff887f96c8d910:mm_struct] 
+    ffff885f8fb4fbf8: 00007ff6c13e3200 ffff885f8fb4fc28 
+    ffff885f8fb4fc08: flush_tlb_page+85 
+ #3 [ffff885f8fb4fc08] flush_tlb_page at ffffffff81072a95
+    ffff885f8fb4fc10: 00007ff6c13e3200 8000001d550db005 
+    ffff885f8fb4fc20: [ffff887f96c8d640:mm_struct] ffff885f8fb4fc58 
+    ffff885f8fb4fc30: ptep_clear_flush+78 
+ #4 [ffff885f8fb4fc30] ptep_clear_flush at ffffffff811d048e
+    ffff885f8fb4fc38: [ffff887f96c8d640:mm_struct] 0000000000000302 
+    ffff885f8fb4fc48: ffffea00755436c0 ffff881eab973f18 
+    ffff885f8fb4fc58: ffff885f8fb4fcc8 try_to_unmap_one+167 
+ #5 [ffff885f8fb4fc60] try_to_unmap_one at ffffffff811cb1c7
+    ffff885f8fb4fc68: ffff885f8fb4fc88 ttwu_do_activate.constprop.89+93 
+    ffff885f8fb4fc78: [ffff881fa1123dac:task_struct] [ffff885f5f1583e8:vm_area_struct] 
+    ffff885f8fb4fc88: 000000008fb4fcd0 ffffea007aae5cf0 
+    ffff885f8fb4fc98: 000000007f655fea [ffff883f3f291840:kmalloc-64] 
+    ffff885f8fb4fca8: ffff885f8fb4fd88 0000000000000000 
+    ffff885f8fb4fcb8: [ffff885f5f1583e8:vm_area_struct] [ffff887f5ad6c500:kmalloc-64] 
+    ffff885f8fb4fcc8: ffff885f8fb4fd20 rmap_walk_ksm+257 
+ #6 [ffff885f8fb4fcd0] rmap_walk_ksm at ffffffff811e6f91
+
+## Comment:
+# rmap_item list(stable_node->hlist):
+#     stable_node: 0xffff881f836ba000 stable_node->hlist->first = 0xffff883f3e5746b0
+# 
+# struct hlist_head {
+#   [0] struct hlist_node *first;
+# }
+# struct hlist_node {
+#    [0] struct hlist_node *next;
+#    [8] struct hlist_node **pprev;
+# }
+# 
+# 
+# list hlist_node.next 0xffff883f3e5746b0 > rmap_item.lst
+# 
+# $ wc -l rmap_item.lst
+# 2306920 rmap_item.lst
+# 
+#
+# anon_vma->rb_root:
+#
+#
+
+## Comment:
+##   0xffffffff811e6ed2 <rmap_walk_ksm+66>:       callq  0xffffffff811ac070 <page_rmapping>
+##   0xffffffff811e6ed7 <rmap_walk_ksm+71>:       test   %rax,%rax <-- stable_node
+##   0xffffffff811e6eda <rmap_walk_ksm+74>:       mov    %rax,-0x48(%rbp)
+## %rbp == 0xffff885f8fb4fd20, %rbp-0x48 = 0xffff885f8fb4fcd8
+
+## Comment:
+## 0xffffffff811e6f0e <rmap_walk_ksm+126>:      mov    (%r14),%rax ## anon_vma->root
+## 0xffffffff811e6f11 <rmap_walk_ksm+129>:      lea    0x8(%rax),%rdi ## anon_vma->rwsem
+## 0xffffffff811e6f15 <rmap_walk_ksm+133>:      mov    %rax,-0x40(%rbp)
+## %rbp == 0xffff885f8fb4fd20, %rbp-0x48 = 0xffff885f8fb4fce0
+
+    ffff885f8fb4fcd8: [ffff881f836ba000:ftrace_event_field] [ffff887f5ad6d190:anon_vma] 
+				stable_node
+## Comment:
+## 0xffffffff811e6ece <rmap_walk_ksm+62>:       mov    %rdi,-0x30(%rbp) <-- page
+## %rbp == 0xffff885f8fb4fd20, %rbp-0x30 = 0xffff885f8fb4fcf0
+
+## Comment:
+## 0xffffffff811e6f05 <rmap_walk_ksm+117>:      mov    %rax,-0x38(%rbp) <-- anon_vma
+## %rbp == 0xffff885f8fb4fd20, %rbp-0x38 = 0xffff885f8fb4fce8
+
+    ffff885f8fb4fce8: [ffff887f5ad6d190:anon_vma] ffffea00755436c0
+							page
+    ffff885f8fb4fcf8: [ffff881f836ba003:ftrace_event_field] ffff885f8fb4fd88 
+				     %rbx                          %r12
+    ffff885f8fb4fd08: ffffea00755436c0 ffffea01f6d25280 
+			  %r13              %r14
+    ffff885f8fb4fd18: 0000000000000000 ffff885f8fb4fd78 
+			  %r15 	            %rbp
+    ffff885f8fb4fd28: rmap_walk+671    
+
+   0xffffffff811e6e90 <rmap_walk_ksm>:  nopl   0x0(%rax,%rax,1)
+   0xffffffff811e6e95 <rmap_walk_ksm+5>:        push   %rbp
+   0xffffffff811e6e96 <rmap_walk_ksm+6>:        mov    %rsp,%rbp
+   0xffffffff811e6e99 <rmap_walk_ksm+9>:        push   %r15
+   0xffffffff811e6e9b <rmap_walk_ksm+11>:       push   %r14
+   0xffffffff811e6e9d <rmap_walk_ksm+13>:       push   %r13
+   0xffffffff811e6e9f <rmap_walk_ksm+15>:       push   %r12
+   0xffffffff811e6ea1 <rmap_walk_ksm+17>:       push   %rbx
+   0xffffffff811e6ea2 <rmap_walk_ksm+18>:       sub    $0x20,%rsp
+
+ #7 [ffff885f8fb4fd28] rmap_walk at ffffffff811cc1bf
+    ffff885f8fb4fd30: 0000000000000003 0000000000000001 
+    ffff885f8fb4fd40: 0000000000000206 ffff88802fffcad0 
+    ffff885f8fb4fd50: ffffea00755436c0 00000000fffffff5 
+    ffff885f8fb4fd60: ffff885f8fb4fe80 ffffea01f6d25280 
+    ffff885f8fb4fd70: 0000000000000000 ffff885f8fb4fdc0 
+    ffff885f8fb4fd80: try_to_unmap+107 
+ #8 [ffff885f8fb4fd80] try_to_unmap at ffffffff811cc46b
+    ffff885f8fb4fd88: 0000000000000302 try_to_unmap_one 
+    ffff885f8fb4fd98: page_not_mapped  page_lock_anon_vma_read 
+    ffff885f8fb4fda8: 0000000000000000 000000007f655fea 
+    ffff885f8fb4fdb8: ffffea00755436c0 ffff885f8fb4fe78 
+    ffff885f8fb4fdc8: migrate_pages+1048 
+ #9 [ffff885f8fb4fdc8] migrate_pages at ffffffff811f26d8
+    ffff885f8fb4fdd0: [ffff885f97745280:task_struct] 00000000fffffff5 
+    ffff885f8fb4fde0: 0000000300000000 000000080000000e 
+    ffff885f8fb4fdf0: 0000000000000000 new_node_page    
+    ffff885f8fb4fe00: 0000000200000000 ffff885f8fb4fea0 
+    ffff885f8fb4fe10: 0000000000000003 0000000000000000 
+    ffff885f8fb4fe20: ffffea00755436c0 remove_migration_pte 
+    ffff885f8fb4fe30: 0000000000000000 0000000000000000 
+    ffff885f8fb4fe40: 0000000000000000 000000007f655fea 
+    ffff885f8fb4fe50: 0000000000000003 ffff885f8fb4ff08 
+    ffff885f8fb4fe60: ffff885f8fb4ff10 [ffff887f96c8d640:mm_struct] 
+    ffff885f8fb4fe70: [ffff887f96c8d6a8:mm_struct] ffff885f8fb4fef0 
+    ffff885f8fb4fe80: do_migrate_pages+439 
+#10 [ffff885f8fb4fe80] do_migrate_pages at ffffffff811e15f7
+    ffff885f8fb4fe88: 0000000000000017 0000000000000014 
+    ffff885f8fb4fe98: 0000000000000000 ffffea00755436e0 
+    ffff885f8fb4fea8: ffffea00755436e0 0000000000000000 
+    ffff885f8fb4feb8: 0000000000000001 000000007f655fea 
+    ffff885f8fb4fec8: [ffff885f974de040:task_struct] [ffff887f96c8d640:mm_struct] 
+    ffff885f8fb4fed8: [ffff885f974de050:task_struct] 0000000000000005 
+    ffff885f8fb4fee8: 0000561c1d501220 ffff885f8fb4ff48 
+    ffff885f8fb4fef8: sys_migrate_pages+429 
+
+x/200i rmap_walk_ksm
+   0xffffffff811e6e90 <rmap_walk_ksm>:  nopl   0x0(%rax,%rax,1)
+   0xffffffff811e6e95 <rmap_walk_ksm+5>:        push   %rbp
+   0xffffffff811e6e96 <rmap_walk_ksm+6>:        mov    %rsp,%rbp
+   0xffffffff811e6e99 <rmap_walk_ksm+9>:        push   %r15
+   0xffffffff811e6e9b <rmap_walk_ksm+11>:       push   %r14
+   0xffffffff811e6e9d <rmap_walk_ksm+13>:       push   %r13
+   0xffffffff811e6e9f <rmap_walk_ksm+15>:       push   %r12
+   0xffffffff811e6ea1 <rmap_walk_ksm+17>:       push   %rbx
+   0xffffffff811e6ea2 <rmap_walk_ksm+18>:       sub    $0x20,%rsp
+   0xffffffff811e6ea6 <rmap_walk_ksm+22>:       mov    0x8(%rdi),%rax
+   0xffffffff811e6eaa <rmap_walk_ksm+26>:       and    $0x3,%eax
+   0xffffffff811e6ead <rmap_walk_ksm+29>:       cmp    $0x3,%rax
+   0xffffffff811e6eb1 <rmap_walk_ksm+33>:       je     0xffffffff811e6ecb <rmap_walk_ksm+59>
+
+   0xffffffff811e6eb3 <rmap_walk_ksm+35>:       mov    $0x1,%r14d
+   0xffffffff811e6eb9 <rmap_walk_ksm+41>:       add    $0x20,%rsp
+   0xffffffff811e6ebd <rmap_walk_ksm+45>:       mov    %r14d,%eax
+   0xffffffff811e6ec0 <rmap_walk_ksm+48>:       pop    %rbx
+   0xffffffff811e6ec1 <rmap_walk_ksm+49>:       pop    %r12
+   0xffffffff811e6ec3 <rmap_walk_ksm+51>:       pop    %r13
+   0xffffffff811e6ec5 <rmap_walk_ksm+53>:       pop    %r14
+   0xffffffff811e6ec7 <rmap_walk_ksm+55>:       pop    %r15
+   0xffffffff811e6ec9 <rmap_walk_ksm+57>:       pop    %rbp
+   0xffffffff811e6eca <rmap_walk_ksm+58>:       retq   
+   0xffffffff811e6ecb <rmap_walk_ksm+59>:       mov    %rsi,%r12 ## rmap_walk_control *rwc
+   0xffffffff811e6ece <rmap_walk_ksm+62>:       mov    %rdi,-0x30(%rbp) <-- page 
+   0xffffffff811e6ed2 <rmap_walk_ksm+66>:       callq  0xffffffff811ac070 <page_rmapping>
+   0xffffffff811e6ed7 <rmap_walk_ksm+71>:       test   %rax,%rax <-- stable_node
+   0xffffffff811e6eda <rmap_walk_ksm+74>:       mov    %rax,-0x48(%rbp)
+
+1928         if (!stable_node)
+1929                 return ret;
+
+   0xffffffff811e6ede <rmap_walk_ksm+78>:       je     0xffffffff811e6eb3 <rmap_walk_ksm+35>
+   0xffffffff811e6ee0 <rmap_walk_ksm+80>:       xor    %r13d,%r13d
+   0xffffffff811e6ee3 <rmap_walk_ksm+83>:       mov    -0x48(%rbp),%rax <-- stable_node
+
+crash> struct -o stable_node
+struct stable_node {
+       union {
+   [0]     struct rb_node node;
+           struct {
+   [0]         struct list_head *head;
+   [8]         struct list_head list;
+           };
+       };
+  [24] struct hlist_head hlist; <-- hlist
+  [32] unsigned long kpfn;
+  [40] int nid;
+}
+SIZE: 48
+
+crash> struct -o hlist_head
+struct hlist_head {
+  [0] struct hlist_node *first;
+}
+SIZE: 8
+
+   0xffffffff811e6ee7 <rmap_walk_ksm+87>:       mov    0x18(%rax),%rbx ## stable_node->hlist
+   0xffffffff811e6eeb <rmap_walk_ksm+91>:       test   %rbx,%rbx
+   0xffffffff811e6eee <rmap_walk_ksm+94>:       je     0xffffffff811e6fe7 <rmap_walk_ksm+343>
+
+crash> struct -o rmap_item
+struct rmap_item {
+   [0] struct rmap_item *rmap_list;
+       union {
+   [8]     struct anon_vma *anon_vma;
+   [8]     int nid;
+       };
+  [16] struct mm_struct *mm;
+  [24] unsigned long address;
+  [32] unsigned int oldchecksum;
+       union {
+  [40]     struct rb_node node;
+           struct {
+  [40]         struct stable_node *head;
+  [48]         struct hlist_node hlist; <-- hlist
+           };
+       };
+}
+SIZE: 64
+
+   0xffffffff811e6ef4 <rmap_walk_ksm+100>:      sub    $0x30,%rbx ## to get the rmap_item
+   0xffffffff811e6ef8 <rmap_walk_ksm+104>:      je     0xffffffff811e6fe7 <rmap_walk_ksm+343>
+   0xffffffff811e6efe <rmap_walk_ksm+110>:      mov    0x8(%rbx),%rax ## rmap_item->anon_vma[8]
+   0xffffffff811e6f02 <rmap_walk_ksm+114>:      mov    %rax,%r14
+   0xffffffff811e6f05 <rmap_walk_ksm+117>:      mov    %rax,-0x38(%rbp)
+   0xffffffff811e6f09 <rmap_walk_ksm+121>:      callq  0xffffffff81820610 <_cond_resched>
+
+crash> struct -o anon_vma
+struct anon_vma {
+   [0] struct anon_vma *root;
+   [8] struct rw_semaphore rwsem;
+  [48] atomic_t refcount;
+  [52] unsigned int degree;
+  [56] struct anon_vma *parent;
+  [64] struct rb_root rb_root;
+}
+SIZE: 72
+
+   0xffffffff811e6f0e <rmap_walk_ksm+126>:      mov    (%r14),%rax ## anon_vma->root
+   0xffffffff811e6f11 <rmap_walk_ksm+129>:      lea    0x8(%rax),%rdi ## anon_vma->rwsem
+   0xffffffff811e6f15 <rmap_walk_ksm+133>:      mov    %rax,-0x40(%rbp)
+   0xffffffff811e6f19 <rmap_walk_ksm+137>:      callq  0xffffffff81822820 <down_read>
+   0xffffffff811e6f1e <rmap_walk_ksm+142>:      lea    0x40(%r14),%rdi ## anon_vma->rb_root to %edi
+   0xffffffff811e6f22 <rmap_walk_ksm+146>:      xor    %esi,%esi
+   0xffffffff811e6f24 <rmap_walk_ksm+148>:      mov    $0xffffffffffffffff,%rdx
+
+1878 #define anon_vma_interval_tree_foreach(avc, root, start, last)           \
+1879         for (avc = anon_vma_interval_tree_iter_first(root, start, last); \
+1880              avc; avc = anon_vma_interval_tree_iter_next(avc, start, last))
+
+   0xffffffff811e6f2b <rmap_walk_ksm+155>:      callq  0xffffffff811b8de0 <anon_vma_interval_tree_iter_first>
+   0xffffffff811e6f30 <rmap_walk_ksm+160>:      test   %rax,%rax # avc
+   0xffffffff811e6f33 <rmap_walk_ksm+163>:      mov    %rax,%r15 # %r15 == avc
+   0xffffffff811e6f36 <rmap_walk_ksm+166>:      je     0xffffffff811e6fca <rmap_walk_ksm+314> ## avc == 0, call up_read
+   0xffffffff811e6f3c <rmap_walk_ksm+172>:      callq  0xffffffff81820610 <_cond_resched>
+
+crash> struct -o anon_vma_chain
+struct anon_vma_chain {
+   [0] struct vm_area_struct *vma;
+   [8] struct anon_vma *anon_vma;
+  [16] struct list_head same_vma;
+  [32] struct rb_node rb;
+  [56] unsigned long rb_subtree_last;
+}
+SIZE: 64
+
+   0xffffffff811e6f41 <rmap_walk_ksm+177>:      mov    (%r15),%r14 ## vmac->vma == %r14
+   0xffffffff811e6f44 <rmap_walk_ksm+180>:      mov    0x18(%rbx),%rdx ## rmap_item->address == %rdx
+
+crash> struct -o vm_area_struct
+struct vm_area_struct {
+    [0] unsigned long vm_start;
+    [8] unsigned long vm_end;
+
+1942                         if (rmap_item->address < vma->vm_start ||
+1943                             rmap_item->address >= vma->vm_end)
+1944                                 continue;
+
+   0xffffffff811e6f48 <rmap_walk_ksm+184>:      cmp    (%r14),%rdx ## vmac->vma->vm_start
+   0xffffffff811e6f4b <rmap_walk_ksm+187>:      jb     0xffffffff811e6fad <rmap_walk_ksm+285>
+   0xffffffff811e6f4d <rmap_walk_ksm+189>:      cmp    0x8(%r14),%rdx
+
+## Jump to anon_vma_interval_tree_iter_next
+
+   0xffffffff811e6f51 <rmap_walk_ksm+193>:      jae    0xffffffff811e6fad <rmap_walk_ksm+285>
+
+crash> struct -o vm_area_struct
+struct vm_area_struct {
+   ...
+   [64] struct mm_struct *vm_mm;
+
+   0xffffffff811e6f53 <rmap_walk_ksm+195>:      mov    0x40(%r14),%rax ## vma->vm_mm == %rax
+   0xffffffff811e6f57 <rmap_walk_ksm+199>:      cmp    %rax,0x10(%rbx) ## rmap_item->mm == 0x10(%rbx)
+   0xffffffff811e6f5b <rmap_walk_ksm+203>:      sete   %al
+   0xffffffff811e6f5e <rmap_walk_ksm+206>:      movzbl %al,%eax
+   0xffffffff811e6f61 <rmap_walk_ksm+209>:      cmp    %eax,%r13d
+   0xffffffff811e6f64 <rmap_walk_ksm+212>:      je     0xffffffff811e6fad <rmap_walk_ksm+285>
+
+1954                         if (rwc->invalid_vma && rwc->invalid_vma(vma, rwc->arg))
+1955                                 continue; 
+
+   0xffffffff811e6f66 <rmap_walk_ksm+214>:      mov    0x20(%r12),%rax  ## rwc->invalid_vma
+   0xffffffff811e6f6b <rmap_walk_ksm+219>:      test   %rax,%rax
+   0xffffffff811e6f6e <rmap_walk_ksm+222>:      je     0xffffffff811e6f81 <rmap_walk_ksm+241>
+   0xffffffff811e6f70 <rmap_walk_ksm+224>:      mov    (%r12),%rsi ## rwc->arg
+   0xffffffff811e6f74 <rmap_walk_ksm+228>:      mov    %r14,%rdi  ## vma
+   0xffffffff811e6f77 <rmap_walk_ksm+231>:      callq  *%rax ## rwc->invalid_vma(vma, rwc->arg)
+   0xffffffff811e6f79 <rmap_walk_ksm+233>:      test   %al,%al
+   0xffffffff811e6f7b <rmap_walk_ksm+235>:      jne    0xffffffff811e6fad <rmap_walk_ksm+285> ## continue
+   0xffffffff811e6f7d <rmap_walk_ksm+237>:      mov    0x18(%rbx),%rdx ## rmap_item->address == %rdx
+   0xffffffff811e6f81 <rmap_walk_ksm+241>:      mov    %r14,%rsi ## vma
+   0xffffffff811e6f84 <rmap_walk_ksm+244>:      mov    (%r12),%rcx ## rwc->arg
+   0xffffffff811e6f88 <rmap_walk_ksm+248>:      mov    -0x30(%rbp),%rdi ## page
+
+crash> struct -o rmap_walk_control
+struct rmap_walk_control {
+   [0] void *arg;
+   [8] int (*rmap_one)(struct page *, struct vm_area_struct *, unsigned long, void *);
+  [16] int (*done)(struct page *);
+       struct anon_vma *(*anon_lock)(struct page *);
+  [32] bool (*invalid_vma)(struct vm_area_struct *, void *);
+}
+SIZE: 40
+
+1957                         ret = rwc->rmap_one(page, vma,
+1958                                         rmap_item->address, rwc->arg);
+
+   0xffffffff811e6f8c <rmap_walk_ksm+252>:      callq  *0x8(%r12)  <-- rwc->rmap_one()
+   0xffffffff811e6f91 <rmap_walk_ksm+257>:      cmp    $0x1,%eax
+   0xffffffff811e6f94 <rmap_walk_ksm+260>:      mov    %eax,%r14d
+   0xffffffff811e6f97 <rmap_walk_ksm+263>:      jne    0xffffffff811e6ffa <rmap_walk_ksm+362>
+   0xffffffff811e6f99 <rmap_walk_ksm+265>:      mov    0x10(%r12),%rax
+   0xffffffff811e6f9e <rmap_walk_ksm+270>:      test   %rax,%rax
+   0xffffffff811e6fa1 <rmap_walk_ksm+273>:      je     0xffffffff811e6fad <rmap_walk_ksm+285>
+   0xffffffff811e6fa3 <rmap_walk_ksm+275>:      mov    -0x30(%rbp),%rdi
+   0xffffffff811e6fa7 <rmap_walk_ksm+279>:      callq  *%rax
+   0xffffffff811e6fa9 <rmap_walk_ksm+281>:      test   %eax,%eax
+   0xffffffff811e6fab <rmap_walk_ksm+283>:      jne    0xffffffff811e6ffa <rmap_walk_ksm+362>
+   0xffffffff811e6fad <rmap_walk_ksm+285>:      xor    %esi,%esi
+   0xffffffff811e6faf <rmap_walk_ksm+287>:      mov    %r15,%rdi
+   0xffffffff811e6fb2 <rmap_walk_ksm+290>:      mov    $0xffffffffffffffff,%rdx
+   0xffffffff811e6fb9 <rmap_walk_ksm+297>:      callq  0xffffffff811b8e10 <anon_vma_interval_tree_iter_next>
+   0xffffffff811e6fbe <rmap_walk_ksm+302>:      test   %rax,%rax
+   0xffffffff811e6fc1 <rmap_walk_ksm+305>:      mov    %rax,%r15
+   0xffffffff811e6fc4 <rmap_walk_ksm+308>:      jne    0xffffffff811e6f3c <rmap_walk_ksm+172>
+   0xffffffff811e6fca <rmap_walk_ksm+314>:      mov    -0x38(%rbp),%rax
+   0xffffffff811e6fce <rmap_walk_ksm+318>:      mov    (%rax),%rdi
+   0xffffffff811e6fd1 <rmap_walk_ksm+321>:      add    $0x8,%rdi
+   0xffffffff811e6fd5 <rmap_walk_ksm+325>:      callq  0xffffffff810c9f70 <up_read>
+   0xffffffff811e6fda <rmap_walk_ksm+330>:      mov    0x30(%rbx),%rbx
+   0xffffffff811e6fde <rmap_walk_ksm+334>:      test   %rbx,%rbx
+   0xffffffff811e6fe1 <rmap_walk_ksm+337>:      jne    0xffffffff811e6ef4 <rmap_walk_ksm+100>
+   0xffffffff811e6fe7 <rmap_walk_ksm+343>:      add    $0x1,%r13d
+   0xffffffff811e6feb <rmap_walk_ksm+347>:      cmp    $0x2,%r13d
+   0xffffffff811e6fef <rmap_walk_ksm+351>:      jne    0xffffffff811e6ee3 <rmap_walk_ksm+83>
+   0xffffffff811e6ff5 <rmap_walk_ksm+357>:      jmpq   0xffffffff811e6eb3 <rmap_walk_ksm+35>
+   0xffffffff811e6ffa <rmap_walk_ksm+362>:      mov    -0x38(%rbp),%rax
+   0xffffffff811e6ffe <rmap_walk_ksm+366>:      mov    (%rax),%rdi
+   0xffffffff811e7001 <rmap_walk_ksm+369>:      add    $0x8,%rdi
+   0xffffffff811e7005 <rmap_walk_ksm+373>:      callq  0xffffffff810c9f70 <up_read>
+   0xffffffff811e700a <rmap_walk_ksm+378>:      jmpq   0xffffffff811e6eb9 <rmap_walk_ksm+41>
+   0xffffffff811e700f:  nop
